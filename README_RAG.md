@@ -9,7 +9,7 @@ pip install -r requirements.txt
 ## Ingestion (à partir du JSONL fusionné)
 ```bash
 export INDEX_DIR=./data/index
-python retriever/ingest.py --data /mnt/data/faq_supnum_merged.jsonl --index_dir $INDEX_DIR
+python retriever/ingest.py --data faq_supnum_merged.jsonl --index_dir $INDEX_DIR
 ```
 
 ## Lancer l'API
