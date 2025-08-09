@@ -5,10 +5,12 @@ from typing import List
 import numpy as np
 from huggingface_hub import InferenceClient
 from httpx import HTTPStatusError
+from dotenv import load_dotenv
 
 HF_MODEL = os.getenv("HF_MODEL", "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
-HF_TOKEN = os.getenv("HF_TOKEN", "***REMOVED***")
+load_dotenv("params.env")
 
+HF_TOKEN = os.getenv("HF_TOKEN", "")
 _client = InferenceClient(model=HF_MODEL, token=HF_TOKEN, timeout=60)
 
 def _normalize(mat: np.ndarray) -> np.ndarray:
