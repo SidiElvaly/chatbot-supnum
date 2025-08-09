@@ -1,0 +1,42 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# --- Environnements virtuels ---
+.env
+.venv
+venv/
+ENV/
+env/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# --- Secrets & Config locales ---
+params.yaml
+params.env
+*.key
+*.pem
+
+# --- OS / Éditeurs ---
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# --- Logs & Bases locales ---
+*.log
+logs/
+*.sqlite
+*.db
+
+# --- Build / Déploiement ---
+build/
+dist/
+*.egg-info/
+*.egg
+
+# --- Cache ---
+.cache/
