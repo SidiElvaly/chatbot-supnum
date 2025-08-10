@@ -7,7 +7,7 @@ from huggingface_hub import InferenceClient
 from httpx import HTTPStatusError
 
 HF_MODEL = os.getenv("HF_MODEL", "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
-HF_TOKEN = os.getenv("HF_TOKEN", "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")
+HF_TOKEN = os.getenv("HF_TOKEN")
 
 _client = InferenceClient(model=HF_MODEL, token=HF_TOKEN, timeout=60)
 
