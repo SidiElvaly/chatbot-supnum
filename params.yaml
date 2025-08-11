@@ -1,0 +1,11 @@
+huggingface:
+  token: "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"  # ton vrai token
+  model_id: "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+  local: false
+
+index:
+  dir: "./data/index"
+
+search:
+  alpha: 0.65
+  confidence_threshold: 0.35
