@@ -12,3 +12,4 @@ openai
 transformers
 torch
 deep-translator
+rank-bm25==0.2.1
