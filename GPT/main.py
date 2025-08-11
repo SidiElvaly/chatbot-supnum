@@ -24,27 +24,39 @@ RETRIEVE_API_URL = os.getenv("RETRIEVE_API_URL", "http://localhost:8001/retrieve
 with open("GPT/prompts/default.txt", "r", encoding="utf-8") as f:
     base_prompt = f.read().strip()
 
-
 def get_relevant_context(question: str, k: int = 3) -> str:
-    """Appelle l'API /retrieve distante pour récupérer le contexte"""
+    import requests
+
     try:
-        response = requests.get(
-            RETRIEVE_API_URL,
-            params={"query": question, "k": k},
-            timeout=10
-        )
-        response.raise_for_status()
-        data = response.json()
+        url = f"http://localhost:8001/retrieve?query={question}&k={k}"
 
-        # On suppose que l'API retourne un tableau d'objets { "question": "...", "answer": "..." }
-        contexts = [
-            f"Q: {item.get('question', '')}\nA: {item.get('answer', '')}"
-            for item in data.get("results", [])
-        ]
-        return "\n\n".join(contexts)
+        response = requests.get(url)
+
+        if response.status_code != 200:
+            print("[ERREUR] Échec de la requête /retrieve")
+            return ""
+
+        results = response.json()
+
+        # Extraire le contexte pertinent depuis la clé "result"
+        result = results.get("result", {})
+        if not result:
+            print("[INFO] Aucun résultat trouvé par /retrieve.")
+            return ""
+
+        # Construire un contexte à partir de la question et la réponse trouvées
+        question_trouvee = result.get("question", "")
+        reponse = result.get("answer", "")
+
+        context = f"Question trouvée : {question_trouvee}\nRéponse : {reponse}"
+
+        print(f"[DEBUG] Contexte extrait: {context}")
+
+        return context.strip()
+
     except Exception as e:
-        raise RuntimeError(f"Erreur lors de l'appel à l'API /retrieve : {e}")
-
+        print(f"[ERREUR] Exception dans get_relevant_context: {e}")
+        return ""
 
 @app.get("/chat")
 async def chat(
@@ -57,10 +69,14 @@ async def chat(
 
         # Récupération du contexte depuis l'API externe
         context = get_relevant_context(question_fr, k=3)
+        # print(context)
 
         # Préparation du prompt
         messages = [
-            {"role": "system", "content": base_prompt},
+             {
+                "role": "system",
+                "content": base_prompt
+            },
             {"role": "user", "content": f"Contexte :\n{context}\n\nQuestion : {question_fr}"}
         ]
 
@@ -79,5 +95,3 @@ async def chat(
 
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
-
-
