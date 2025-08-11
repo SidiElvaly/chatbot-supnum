@@ -1,48 +1,49 @@
 # retriever/embedder.py
 from __future__ import annotations
-import os, time
-from typing import List
+import os
+import json
 import numpy as np
 from huggingface_hub import InferenceClient
-from httpx import HTTPStatusError
-from dotenv import load_dotenv
 
-load_dotenv()
+# ---- load params (optional) ----
+_PARAMS = {}
+try:
+    import yaml  # make sure pyyaml is installed
+    with open(os.path.join(os.path.dirname(__file__), "params.yaml"), "r", encoding="utf-8") as f:
+        _PARAMS = yaml.safe_load(f) or {}
+except Exception:
+    _PARAMS = {}
 
-HF_MODEL = os.getenv("HF_MODEL", "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
-HF_TOKEN = os.getenv("HF_TOKEN")
+# ---- Hugging Face Inference Client ----
+_HF_TOKEN = os.getenv("HF_TOKEN") or (_PARAMS.get("huggingface", {}) or {}).get("token")
+_MODEL_ID = (_PARAMS.get("huggingface", {}) or {}).get("model_id", "sentence-transformers/all-MiniLM-L6-v2")
 
-_client = InferenceClient(model=HF_MODEL, token=HF_TOKEN, timeout=60)
+_client = InferenceClient(model=_MODEL_ID, token=_HF_TOKEN)
 
-def _normalize(mat: np.ndarray) -> np.ndarray:
-    n = np.linalg.norm(mat, axis=1, keepdims=True) + 1e-12
-    return mat / n
+def _mean_pooling(token_embeddings: list[list[float]]) -> np.ndarray:
+    """
+    token_embeddings: shape (seq_len, hidden) from HF Inference API
+    returns: (hidden,)
+    """
+    arr = np.asarray(token_embeddings, dtype=np.float32)
+    if arr.ndim != 2:
+        # some providers may already return a single vector
+        return arr.astype(np.float32)
+    return arr.mean(axis=0).astype(np.float32)
+
+def _l2_normalize(v: np.ndarray) -> np.ndarray:
+    n = np.linalg.norm(v)
+    return v if n == 0 else (v / n).astype(np.float32)
 
 def _embed_one(text: str) -> np.ndarray:
-    if len(text) > 5000:
-        text = text[:5000]
-    backoff = 1.0
-    for _ in range(6):
-        try:
-            tok = _client.feature_extraction(text)  # supporté par les Sentence-Transformers
-            arr = np.asarray(tok, dtype=np.float32)
-            if arr.ndim == 2:
-                vec = arr.mean(axis=0)
-            elif arr.ndim == 1:
-                vec = arr
-            else:
-                raise RuntimeError(f"Format inattendu: shape={arr.shape}")
-            return vec.astype(np.float32)
-        except HTTPStatusError as e:
-            s = e.response.status_code
-            if s in (409, 503, 529, 524):  # warm-up/surcharge → retry
-                time.sleep(backoff); backoff = min(backoff*2, 8.0); continue
-            if s == 401: raise RuntimeError("HF 401 Unauthorized: vérifie HF_TOKEN.")
-            if s == 404: raise RuntimeError(f"HF 404 Not Found: modèle '{HF_MODEL}' introuvable.")
-            if s == 400: raise RuntimeError(f"HF 400 Bad Request: {e.response.text}") from e
-            raise
-    raise RuntimeError("HF API indisponible après plusieurs retries.")
+    # For sentence-transformers, feature_extraction(text) returns token-level embeddings
+    token_embs = _client.feature_extraction(text)
+    vec = _mean_pooling(token_embs)
+    return _l2_normalize(vec)
 
-def embed_texts(texts: List[str]) -> np.ndarray:
+def embed_texts(texts: list[str]) -> np.ndarray:
+    """
+    Returns (N, D) float32 L2-normalized embeddings
+    """
     vecs = [_embed_one(t) for t in texts]
-    return _normalize(np.stack(vecs, axis=0))
+    return np.stack(vecs, axis=0).astype(np.float32)
