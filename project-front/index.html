@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SupNum University Chatbot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            200: '#99f6e4',
+                            300: '#5eead4',
+                            400: '#2dd4bf',
+                            500: '#14b8a6',
+                            600: '#0d9488',
+                            700: '#0f766e',
+                            800: '#115e59',
+                            900: '#134e4a',
+                        },
+                        secondary: {
+                            50: '#f8fafc',
+                            100: '#f1f5f9',
+                            200: '#e2e8f0',
+                            300: '#cbd5e1',
+                            400: '#94a3b8',
+                            500: '#64748b',
+                            600: '#475569',
+                            700: '#334155',
+                            800: '#1e293b',
+                            900: '#0f172a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-secondary-50 text-secondary-900 dark:bg-secondary-900 dark:text-secondary-100 h-screen flex flex-col overflow-hidden">
+    <!-- Header -->
+    <header class="bg-primary-600 text-white shadow-md dark:bg-primary-800 flex-shrink-0">
+        <div class="container mx-auto px-4 py-1 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <img src="chat-logo.png" alt="SupNum Logo" class="h-20 w-20 rounded">
+                <h1 class="text-xl font-bold">SupNum Assistant</h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <!-- Language Selector -->
+                <div class="relative">
+                    <select id="language-selector" class="appearance-none bg-white text-primary-700 dark:bg-secondary-800 text-sm rounded px-3 py-1 pr-8 border border-gray-300 dark:border-secondary-600 focus:outline-none focus:ring-1 focus:ring-primary-500">
+                        <option value="en">English</option>
+                        <option value="fr">Français</option>
+                        <option value="ar">العربية</option>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-300">
+                        <i class="fas fa-chevron-down text-xs"></i>
+                    </div>
+                </div>
+                
+                <button id="theme-toggle" class="p-2 rounded-full hover:bg-primary-500 dark:hover:bg-primary-700 transition">
+                    <i class="fas fa-moon dark:hidden"></i>
+                    <i class="fas fa-sun hidden dark:block"></i>
+                </button>
+                <button class="p-2 rounded-full hover:bg-primary-500 dark:hover:bg-primary-700 transition">
+                    <i class="fas fa-cog"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex overflow-hidden">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="w-64 bg-white dark:bg-secondary-800 shadow-md border-r border-gray-200 dark:border-secondary-700 flex-shrink-0 hidden md:block overflow-y-auto">
+            <div class="p-4">
+                <div class="mb-6">
+                    <h2 class="text-lg font-semibold mb-2">Quick Actions</h2>
+                    <ul class="space-y-2">
+                        <li>
+                            <button class="w-full text-left px-3 py-2 rounded bg-primary-50 text-primary-700 hover:bg-primary-100 dark:bg-primary-900/50 dark:text-primary-100 dark:hover:bg-primary-800 transition">
+                                <i class="fas fa-calendar-alt mr-2"></i>Academic Calendar
+                            </button>
+                        </li>
+                        <li>
+                            <button class="w-full text-left px-3 py-2 rounded bg-primary-50 text-primary-700 hover:bg-primary-100 dark:bg-primary-900/50 dark:text-primary-100 dark:hover:bg-primary-800 transition">
+                                <i class="fas fa-book mr-2"></i>Course Catalog
+                            </button>
+                        </li>
+                        <li>
+                            <button class="w-full text-left px-3 py-2 rounded bg-primary-50 text-primary-700 hover:bg-primary-100 dark:bg-primary-900/50 dark:text-primary-100 dark:hover:bg-primary-800 transition">
+                                <i class="fas fa-question-circle mr-2"></i>FAQs
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h2 class="text-lg font-semibold mb-2">Recent Chats</h2>
+                    <ul id="conversation-history" class="space-y-2">
+                        <!-- Conversation history items will be added here -->
+                    </ul>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Chat Container -->
+        <div class="flex-1 flex flex-col min-w-0">
+            <!-- Chat Header -->
+            <div class="px-4 py-3 flex items-center flex-shrink-0">
+                <button id="history-toggle" class="mr-3 p-2 rounded-full hover:bg-primary-500 dark:hover:bg-primary-700 transition md:hidden">
+                    <i class="fas fa-history"></i>
+                </button>
+                <button id="sidebar-toggle" class="p-2 rounded-full hover:bg-primary-500 dark:hover:bg-primary-700 transition md:hidden">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+            
+            <!-- Messages Area -->
+            <div id="chat-messages" class="flex-1 p-4 overflow-y-auto">
+                <!-- Welcome message -->
+                <div class="flex justify-start">
+                    <div class="max-w-xs md:max-w-md lg:max-w-lg bg-primary-100 dark:bg-primary-900/50 rounded-lg p-3">
+                        <p>Hello! I'm your SupNum University assistant. How can I help you today? You can ask about admissions, courses, schedules, or any other university-related questions.</p>
+                        <p class="text-xs text-secondary-500 dark:text-secondary-400 mt-2">Today at <span id="current-time"></span></p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Input Area -->
+            <div class="border-t border-gray-200 dark:border-secondary-700 p-4 bg-secondary-50 dark:bg-secondary-800/50 flex-shrink-0">
+                <form id="chat-form" class="flex items-center gap-2">
+                    <div class="flex-1 relative">
+                        <input 
+                            id="message-input" 
+                            type="text" 
+                            placeholder="Type your message here..." 
+                            class="w-full px-4 py-3 rounded-full border border-gray-300 dark:border-secondary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-secondary-700 dark:text-white dark:placeholder-secondary-400"
+                            autocomplete="off"
+                            dir="auto"
+                        >
+                    </div>
+                    <button 
+                        type="submit" 
+                        class="bg-primary-600 hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 text-white rounded-full w-10 h-10 flex items-center justify-center transition"
+                    >
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </form>
+                <p class="text-xs text-secondary-500 dark:text-secondary-400 mt-2 text-center">SupNum Chat Assistant v1.0</p>
+            </div>
+        </div>
+
+        <!-- Conversation History Panel -->
+        <aside id="history-panel" class="w-64 bg-white dark:bg-secondary-800 shadow-md border-l border-gray-200 dark:border-secondary-700 flex-shrink-0 hidden overflow-y-auto">
+            <div class="p-4">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-semibold">Conversation History</h2>
+                    <button id="close-history" class="p-2 rounded-full hover:bg-secondary-100 dark:hover:bg-secondary-700 transition">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <ul id="history-list" class="space-y-2">
+                    <!-- History items will be added here -->
+                </ul>
+            </div>
+        </aside>
+    </main>
+
+    <!-- Mobile Overlay -->
+    <div id="mobile-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
